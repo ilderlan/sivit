@@ -1,23 +1,27 @@
 package br.gov.caixa.sivit.config;
 
-import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 
-@Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(securedEnabled = true)
 public class ResourceServerConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        final JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(new KeycloakRealmRoleConverter()); // delegate to custom converter
         http.cors().and()
                 .authorizeRequests()
-                .mvcMatchers("/api/init/**").hasAuthority("NOP_ADMIN")
-                .anyRequest().denyAll()
+                /*.mvcMatchers("/**").hasRole("SCOPE_pld")*/
+                .anyRequest().permitAll()
                 .and()
                 .oauth2ResourceServer()
-                .jwt();
+                .jwt()
+                .jwtAuthenticationConverter(jwtAuthenticationConverter);
     }
 
 }
